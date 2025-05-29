@@ -1,0 +1,96 @@
+Configuración de Red, DHCP y Samba en Ubuntu Server
+1. Configurar adaptadores de red en VirtualBox
+
+- Ubuntu Server:
+  - Adaptador 1: NAT
+  - Adaptador 2: Red interna
+
+- Linux Mint:
+  - Adaptador: Red interna
+
+2. Asignar IP estática en Ubuntu Server
+
+Ver interfaces de red:
+    ip a
+
+Editar archivo de configuración de red:
+    sudo nano /etc/netplan/00-installer-config.yaml
+
+Ejemplo de configuración:
+ 
+Aplicar configuración:
+    sudo netplan apply
+
+
+
+
+3. Instalar y configurar servidor DHCP
+
+Actualizar e instalar DHCP Server:
+    sudo apt update
+    sudo apt install isc-dhcp-server
+
+Editar archivo de configuración por defecto:
+    sudo nano /etc/default/isc-dhcp-server
+
+Modificar línea:
+    INTERFACESv4="enp0s8"
+
+Editar configuración principal del DHCP:
+    sudo nano /etc/dhcp/dhcpd.conf
+
+Ajustar parámetros (asegúrate de descomentar si es necesario):
+    default-lease-time 600;
+    max-lease-time 7200;
+    ddns-update-style none;
+    authoritative;
+
+Agregar configuración de subred:
+    subnet 192.168.1.0 netmask 255.255.255.0 {
+        range 192.168.1.100 192.168.1.200;
+        option routers 192.168.1.10;
+    }
+
+Reiniciar servicio y verificar estado:
+    sudo systemctl restart isc-dhcp-server.service
+    sudo systemctl status isc-dhcp-server.service
+
+Verificar errores en caso de fallo:
+    sudo dhcpd -t
+
+
+
+
+
+
+Instalar Samba y configuracion
+sudo apt install samba
+1. Crear el usuario 'benja' en el sistema (si no existe):
+sudo adduser benja
+2. Crear el usuario 'benja' en Samba:
+sudo smbpasswd -a benja
+3. Crear la carpeta compartida:
+sudo mkdir /Compartida
+4. Darle permisos a la carpeta para el usuario 'benja':
+sudo chown benja:benja /Compartida
+sudo chmod 777/Compartida
+5. Editar la configuración de Samba:
+sudo nano /etc/samba/smb.conf
+
+Agregar al final del archivo:
+
+[Compartida]
+   comment = Carpeta compartida en samba
+   path = /Compartida
+   read only = no
+   browsable = yes
+   valid users = benja
+   create mask = 0777
+6. Verificar la configuración de Samba:
+testparm
+7. Reiniciar el servicio de Samba:
+sudo systemctl restart smbd
+8. Probar acceso desde otro equipo (Linux Mint o Windows):
+En el explorador de archivos de Linux Mint, escribir:
+smb://192.168.1.70/Compartida
+
